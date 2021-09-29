@@ -48,7 +48,7 @@ func (m Migrator) HasTable(value interface{}) bool {
 	var count int64
 
 	m.RunWithValue(value, func(stmt *gorm.Statement) error {
-		return m.DB.Raw("SELECT COUNT(*) FROM USER_TABLES WHERE TABLE_NAME = ?", stmt.Table).Row().Scan(&count)
+		return m.DB.Raw("SELECT COUNT(*) FROM USER_TABLES WHERE LOWER(TABLE_NAME) = LOWER(?)", stmt.Table).Row().Scan(&count)
 	})
 
 	return count > 0
@@ -138,7 +138,7 @@ func (m Migrator) AlterColumn(value interface{}, field string) error {
 func (m Migrator) HasColumn(value interface{}, field string) bool {
 	var count int64
 	return m.RunWithValue(value, func(stmt *gorm.Statement) error {
-		return m.DB.Raw("SELECT COUNT(*) FROM USER_TAB_COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?", stmt.Table, field).Row().Scan(&count)
+		return m.DB.Raw("SELECT COUNT(*) FROM USER_TAB_COLUMNS WHERE LOWER(TABLE_NAME) = LOWER(?) AND LOWER(COLUMN_NAME) = LOWER(?)", stmt.Table, field).Row().Scan(&count)
 	}) == nil && count > 0
 }
 
@@ -169,7 +169,7 @@ func (m Migrator) HasConstraint(value interface{}, name string) bool {
 	var count int64
 	return m.RunWithValue(value, func(stmt *gorm.Statement) error {
 		return m.DB.Raw(
-			"SELECT COUNT(*) FROM USER_CONSTRAINTS WHERE TABLE_NAME = ? AND CONSTRAINT_NAME = ?", stmt.Table, name,
+			"SELECT COUNT(*) FROM USER_CONSTRAINTS WHERE LOWER(TABLE_NAME) = LOWER(?) AND LOWER(CONSTRAINT_NAME) = LOWER(?)", stmt.Table, name,
 		).Row().Scan(&count)
 	}) == nil && count > 0
 }
@@ -192,7 +192,7 @@ func (m Migrator) HasIndex(value interface{}, name string) bool {
 		}
 
 		return m.DB.Raw(
-			"SELECT COUNT(*) FROM USER_INDEXES WHERE TABLE_NAME = ? AND INDEX_NAME = ?",
+			"SELECT COUNT(*) FROM USER_INDEXES WHERE LOWER(TABLE_NAME) = LOWER(?) AND LOWER(INDEX_NAME) = LOWER(?)",
 			m.Migrator.DB.NamingStrategy.TableName(stmt.Table),
 			m.Migrator.DB.NamingStrategy.IndexName(stmt.Table, name),
 		).Row().Scan(&count)
