@@ -194,7 +194,7 @@ func (m Migrator) HasIndex(value interface{}, name string) bool {
 		return m.DB.Raw(
 			"SELECT COUNT(*) FROM USER_INDEXES WHERE LOWER(TABLE_NAME) = LOWER(?) AND LOWER(INDEX_NAME) = LOWER(?)",
 			m.Migrator.DB.NamingStrategy.TableName(stmt.Table),
-			m.Migrator.DB.NamingStrategy.IndexName(stmt.Table, name),
+			name,
 		).Row().Scan(&count)
 	})
 
