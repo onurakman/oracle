@@ -86,12 +86,12 @@ func (d Dialector) WhereChange(c clause.Clause, builder clause.Builder) {
 					for idx, expr := range where.Exprs {
 						reflectValue := reflect.ValueOf(expr)
 						if reflectValue.Kind() == reflect.Struct {
-							if field := reflectValue.FieldByName("Column"); field.IsValid() && !field.IsZero() {
+							if field := reflectValue.Field(idx); field.IsValid() && !field.IsZero() && field.Bool() {
 								if column, ok := field.Interface().(clause.Column); ok {
 									column.Table = ""
 									result := reflect.New(reflectValue.Type()).Elem()
 									result.Set(reflectValue)
-									result.FieldByName("Column").Set(reflect.ValueOf(column))
+									result.Field(idx).Set(reflect.ValueOf(column))
 									where.Exprs[idx] = result.Interface().(clause.Expression)
 								}
 							}
