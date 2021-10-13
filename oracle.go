@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"gorm.io/gorm/utils"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -72,7 +73,33 @@ func (d Dialector) Initialize(db *gorm.DB) (err error) {
 
 func (d Dialector) ClauseBuilders() map[string]clause.ClauseBuilder {
 	return map[string]clause.ClauseBuilder{
+		"WHERE": d.WhereChange,
 		"LIMIT": d.RewriteLimit,
+	}
+}
+
+func (d Dialector) WhereChange(c clause.Clause, builder clause.Builder) {
+	if _, ok := c.Expression.(clause.Where); ok {
+		if stmt, ok := builder.(*gorm.Statement); ok {
+			if c, ok := stmt.Clauses["WHERE"]; ok {
+				if where, ok := c.Expression.(clause.Where); ok {
+					for idx, expr := range where.Exprs {
+						reflectValue := reflect.ValueOf(expr)
+						if reflectValue.Kind() == reflect.Struct {
+							if field := reflectValue.FieldByName("Column"); field.IsValid() && !field.IsZero() {
+								if column, ok := field.Interface().(clause.Column); ok {
+									column.Table = ""
+									result := reflect.New(reflectValue.Type()).Elem()
+									result.Set(reflectValue)
+									result.FieldByName("Column").Set(reflect.ValueOf(column))
+									where.Exprs[idx] = result.Interface().(clause.Expression)
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 }
 
